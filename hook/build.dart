@@ -73,11 +73,7 @@ Future<void> main(List<String> args) async {
   final os = config.targetOS;
   final arch = config.targetArchitecture;
   if (os == OS.android) {
-    final abi = switch (arch) {
-      Architecture.arm64 => 'arm64-v8a',
-      Architecture.arm => 'armeabi-v7a',
-      _ => throw UnsupportedError('Android architecture $arch is unsupported.'),
-    };
+    final abi = _androidAbi(arch);
     return (
       script: 'make',
       arguments: ['-C', 'android', 'build_$abi'],
@@ -100,13 +96,23 @@ Future<void> main(List<String> args) async {
 File _builtLibrary(Directory root, CodeConfig config, String outputFileName) {
   final os = config.targetOS;
   if (os == OS.android) {
-    final abi = config.targetArchitecture == Architecture.arm64
-        ? 'arm64-v8a'
-        : 'armeabi-v7a';
+    final abi = _androidAbi(config.targetArchitecture);
     return File('${root.path}/android/src/main/jniLibs/$abi/libduckdb.so');
   }
   if (os == OS.iOS) {
     return File('${root.path}/ios/Libraries/release/duckdb.framework/duckdb');
   }
   throw UnsupportedError('Unsupported target OS ${config.targetOS}.');
+}
+
+String _androidAbi(Architecture architecture) {
+  return switch (architecture) {
+    Architecture.arm64 => 'arm64-v8a',
+    Architecture.arm => 'armeabi-v7a',
+    Architecture.x64 => 'x86_64',
+    Architecture.ia32 => 'x86',
+    _ => throw UnsupportedError(
+      'Android architecture $architecture is unsupported.',
+    ),
+  };
 }
