@@ -23,11 +23,7 @@ Future<void> main(List<String> args) async {
     if (mode != _source) return;
 
     final config = input.config.code;
-    if (config.targetOS != OS.android && config.targetOS != OS.iOS) {
-      throw UnsupportedError(
-        'dart_duckdb source builds currently support Android and iOS only.',
-      );
-    }
+    if (config.targetOS != OS.android && config.targetOS != OS.iOS) return;
     final packageRoot = Directory.fromUri(input.packageRoot);
     final outputDirectory = Directory.fromUri(input.outputDirectory);
     await outputDirectory.create(recursive: true);

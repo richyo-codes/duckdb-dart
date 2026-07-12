@@ -95,4 +95,5 @@ task downloadAndExtractDuckDB {
     }
 }
 
-preBuild.dependsOn downloadAndExtractDuckDB
+// Native-assets source builds provide the Android library.
+// preBuild.dependsOn downloadAndExtractDuckDB
