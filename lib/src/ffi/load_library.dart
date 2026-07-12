@@ -12,7 +12,12 @@ DynamicLibrary _defaultOpen() {
   if (Platform.isAndroid) {
     return DynamicLibrary.open('libduckdb.so');
   } else if (Platform.isIOS) {
-    return DynamicLibrary.open('duckdb.framework/duckdb');
+    try {
+      return DynamicLibrary.open('duckdb.framework/duckdb');
+    } catch (_) {
+      // DynamicLoadingBundled code assets are exposed by their library name.
+      return DynamicLibrary.open('duckdb');
+    }
   } else if (Platform.isMacOS) {
     DynamicLibrary result;
     result = DynamicLibrary.process();
@@ -92,22 +97,19 @@ class OpenDynamicLibrary extends OpenLibrary {
       final prefix = '${Directory.current.path}/../duckdb';
 
       if (_overriddenPlatforms[OperatingSystem.windows] == null) {
-        _overriddenPlatforms[OperatingSystem.windows] =
-            () => DynamicLibrary.open(
-                  '$prefix/windows/Libraries/release/duckdb.dll',
-                );
+        _overriddenPlatforms[OperatingSystem.windows] = () =>
+            DynamicLibrary.open('$prefix/windows/Libraries/release/duckdb.dll');
       }
 
       if (_overriddenPlatforms[OperatingSystem.macOS] == null) {
         _overriddenPlatforms[OperatingSystem.macOS] = () => DynamicLibrary.open(
-              '$prefix/macos/Libraries/release/libduckdb.dylib',
-            );
+          '$prefix/macos/Libraries/release/libduckdb.dylib',
+        );
       }
 
       if (_overriddenPlatforms[OperatingSystem.linux] == null) {
-        _overriddenPlatforms[OperatingSystem.linux] = () => DynamicLibrary.open(
-              '$prefix/linux/Libraries/release/libduckdb.so',
-            );
+        _overriddenPlatforms[OperatingSystem.linux] = () =>
+            DynamicLibrary.open('$prefix/linux/Libraries/release/libduckdb.so');
       }
     }
 

@@ -5,8 +5,8 @@ homepage: https://github.com/TigerEyeLabs/duckdb-dart
 issue_tracker: https://github.com/TigerEyeLabs/duckdb-dart/issues
 
 environment:
-  sdk: ">=3.6.0 <4.0.0"
-  flutter: ">=3.35.3 <=4.0.0"
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.41.0 <=4.0.0"
 
 dependencies:
   async: ^2.11.0
@@ -19,6 +19,8 @@ dependencies:
   path: ^1.8.2
   uuid: ^4.4.0
   web: ^1.1.0
+  code_assets: ^1.2.1
+  hooks: ^2.0.2
 
 dev_dependencies:
   ffigen: ^14.0.1

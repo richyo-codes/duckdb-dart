@@ -61,6 +61,23 @@ Choose DuckDB.dart for a lightweight, high-performance database solution tailore
 
 ## Installation
 
+### Building DuckDB from source (Android and iOS)
+
+Binary mode remains the default. To compile DuckDB locally through Dart build
+hooks, configure the consuming application's `pubspec.yaml`:
+
+```yaml
+hooks:
+  user_defines:
+    dart_duckdb:
+      native_build: source
+```
+
+Source mode requires Dart 3.10 or newer, an Android NDK for Android builds, and
+Xcode plus CMake/Ninja for iOS builds. The first build compiles DuckDB and its
+extensions; later builds use the build-hook cache. `auto` and `binary` retain
+the existing prebuilt-library integrations.
+
 DuckDB.dart is available on [pub.dev](https://pub.dev/packages/dart_duckdb). Add it to your project as follows:
 
 ### For Flutter Projects
