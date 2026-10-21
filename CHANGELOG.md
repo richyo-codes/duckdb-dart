@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+- Support DuckDB 2.0.0 through its compatible legacy C API.
+- Remove the obsolete `test_api` override so tests resolve on Dart 3.10.
+- Fix standalone Dart/CLI/server use without a Flutter SDK ([#41](https://github.com/TigerEyeLabs/duckdb-dart/issues/41)).
+- Bundle precompiled DuckDB through build hooks for Dart and Flutter, with target
+  selection, verified downloads and caching. Desktop checksums are pinned; mobile
+  archives and checksum sidecars come from a versioned GitHub release.
+- Replace Flutter plugin registration and filename-based loading with native asset
+  resolution; retain explicit runtime overrides and add `system`/`library_path`
+  options. Linux defaults to glibc with an explicit musl option.
+- Add Android arm64/x64 and iOS device/simulator source builds from a pinned
+  upstream commit, shared between build hooks and CI.
+- Add desktop Dart CI, CLI bundle smoke checks, and a separate mobile workflow that
+  uploads binaries, SHA-256 checksums and provenance to a draft release.
+- Mobile binary mode requires publishing the first native release; until then use
+  source mode or a local library. DuckDB-Wasm remains separately configured.
+- Update legacy native build recipes and the iOS framework patch for DuckDB 2.0.
+- Upgrade `code_assets` to ^2.1.0, `ffigen` to ^23.0.0, and `lints` to ^6.1.0.
+
 ## 1.4.4
 
 - upgrade duckdb binaries to 1.4.2

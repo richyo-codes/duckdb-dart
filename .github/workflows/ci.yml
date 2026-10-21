@@ -1,0 +1,55 @@
+name: Dart CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+        sdk: [stable]
+        include:
+          - os: ubuntu-24.04
+            sdk: '3.10.0'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.sdk }}
+      - run: dart pub get
+      - run: dart analyze
+      - name: Read expected DuckDB version
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          version = json.loads(Path('hook/native_config.json').read_text())['duckdb_version']
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write(f'DUCKDB_TEST_VERSION={version}\n')
+      - name: Test downloaded code asset without a system DuckDB installation
+        run: dart test test/ffi test/types test/api test/hooks --reporter expanded
+      - name: Build standalone CLI bundle
+        run: dart build cli --target=tools/native_smoke.dart
+      - name: Run standalone CLI bundle
+        shell: bash
+        run: |
+          for executable in ./build/cli/*/bundle/bin/native_smoke*; do
+            "$executable"
+          done
+  release-tools:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tools/tests -v
+  flutter-consumer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: python3 tools/check_flutter.py

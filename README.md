@@ -61,22 +61,75 @@ Choose DuckDB.dart for a lightweight, high-performance database solution tailore
 
 ## Installation
 
-### Building DuckDB from source (Android and iOS)
+### Dart and Flutter native binaries
 
-Binary mode remains the default. To compile DuckDB locally through Dart build
-hooks, configure the consuming application's `pubspec.yaml`:
+Dart 3.10+ build hooks download, verify, cache, and bundle DuckDB **2.0.0** on
+`dart run`, `dart test`, `dart build cli`, and Flutter builds. A standalone Dart
+SDK works; no Flutter SDK or manually installed DuckDB is needed for CLI/server
+applications. Deploy the entire CLI bundle, including its native libraries.
+
+Desktop x64/arm64 binaries come from the official DuckDB release, with SHA-256
+checksums pinned in `hook/native_config.json`. Linux defaults to glibc; set
+`linux_libc: musl` for Alpine/musl targets. Android supports arm64/x64. iOS supports
+arm64 devices and arm64/x64 simulators (minimum iOS 13).
+
+Mobile archives come from the configured GitHub native-binary release. The first
+`native-v2.0.0-r1` release must be built and published before the default mobile
+binary mode can work. Until then, use `native_build: source` or `library_path`.
+Missing downloads and checksum failures produce errors; they never silently load
+an older DuckDB or start a source build. Web retains its separate DuckDB-Wasm setup.
+
+Configure the consuming application's pubspec (or the workspace root pubspec):
 
 ```yaml
 hooks:
   user_defines:
     dart_duckdb:
-      native_build: source
+      native_build: binary # default; auto is an alias
+      # linux_libc: musl
+      # binary_repository: your-org/duckdb-dart # mobile release mirror
+      # library_path: /absolute/path/to/libduckdb.so # bundle a local binary
 ```
 
-Source mode requires Dart 3.10 or newer, an Android NDK for Android builds, and
-Xcode plus CMake/Ninja for iOS builds. The first build compiles DuckDB and its
-extensions; later builds use the build-hook cache. `auto` and `binary` retain
-the existing prebuilt-library integrations.
+For an existing system installation, set `native_build: system`; no binary is
+downloaded or bundled, and the runtime loader must be able to find DuckDB.
+`open.overrideFor(...)` still supports explicit runtime library selection, but use
+`system` or `library_path` to avoid the default build-time download as well.
+
+### Building DuckDB from source (Android and iOS)
+
+Set `native_build: source` to build the pinned upstream commit using the same
+`tools/build_native.py` script as CI. This requires Python 3, Git, CMake, Ninja,
+and Android NDK r28+ (`ANDROID_NDK_HOME`) or macOS with Xcode for iOS. Source and
+build outputs live in the hook output directory, outside the package source.
+Desktop source builds are not implemented by this hook; use `library_path` for a
+custom desktop binary. These builds include core functions, Parquet, JSON and ICU.
+
+### DuckDB 2.0 compatibility
+
+The Dart interface uses the legacy C API that DuckDB 2.0 continues to export.
+This does not expose all new 2.0 types or the separate `duckdb_v2.h` API.
+
+```sh
+DUCKDB_TEST_VERSION=v2.0.0 dart test test/ffi test/types test/api test/hooks
+```
+
+### Native binary releases
+
+`hook/native_config.json` defines the upstream version/commit, release tag, mobile
+repository and desktop checksums. The `Native binary release` GitHub Actions
+workflow builds Android and iOS on their supported hosts, checks architecture/SDK
+and Android 16 KB load alignment, then packages an archive,
+SHA-256 sidecar and provenance JSON for each target. A manual run builds CI
+artifacts by default. Enable its `publish` input, or push the matching
+`native-v*` tag, to upload a **draft** release after every build succeeds.
+
+Review and test the mobile artifacts before publishing the draft. Draft assets
+are not available to normal package consumers. Releases are immutable: the uploader
+refuses to overwrite an existing release. For rebuilds, increment `release_tag`
+(e.g. `native-v2.0.0-r2`) and keep the hook configuration in sync. Forks must update
+`repository` before using the publishing job. The workflow needs only the scoped
+GitHub Actions token with `contents: write` in that job; no personal token is needed.
 
 DuckDB.dart is available on [pub.dev](https://pub.dev/packages/dart_duckdb). Add it to your project as follows:
 
@@ -110,14 +163,7 @@ dependencies:
   dart_duckdb: ^1.2.0
 ```
 
-Download the latest duckdb release from [duckdb.org](https://github.com/duckdb/duckdb/releases).
-
-In your dart code, tell the framework where the duckdb binary.
-
-```dart
-  open.overrideFor(
-      OperatingSystem.macOS, 'path/to/libduckdb.dylib');
-```
+The build hook bundles the native library automatically.
 
 ### Import it
 
@@ -137,7 +183,7 @@ Here's a simple example to start using DuckDB.dart:
 
 ```dart
 Future<void> main() async {
-  // flutter builds bundle duckdb binaries, but this can be overriden
+  // Build hooks bundle DuckDB; an explicit runtime override is optional.
   // open.overrideFor(OperatingSystem.macOS, 'path/to/libduckdb.dylib');
 
   final db = await duckdb.open(":memory:");
