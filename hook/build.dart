@@ -5,6 +5,7 @@ import 'package:code_assets/code_assets.dart';
 import 'package:hooks/hooks.dart';
 
 import 'native_binary.dart';
+import 'native_source.dart';
 
 Future<void> main(List<String> args) async {
   await build(args, (input, output) async {
@@ -66,28 +67,16 @@ Future<void> main(List<String> args) async {
       }
       output.dependencies.add(library.uri);
     } else if (mode == 'source') {
-      final script = input.packageRoot.resolve('tools/build_native.py');
+      final script = input.packageRoot.resolve('hook/native_source.dart');
       output.dependencies.add(script);
       final directory = Directory.fromUri(
         input.outputDirectory.resolve('source/'),
       );
-      final result =
-          await Process.run(Platform.isWindows ? 'python' : 'python3', [
-            File.fromUri(script).path,
-            '--target',
-            target,
-            '--output',
-            directory.path,
-          ]);
-      if (result.exitCode != 0) {
-        throw ProcessException(
-          'build_native.py',
-          [target],
-          '${result.stdout}\n${result.stderr}',
-          result.exitCode,
-        );
-      }
-      library = File('${directory.path}/$libraryName');
+      library = await buildNativeSource(
+        config: config,
+        target: target,
+        output: directory,
+      );
     } else {
       // auto intentionally uses the same reproducible binary selection. Never
       // silently start a source build when a release is missing or corrupt.

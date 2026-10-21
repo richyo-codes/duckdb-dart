@@ -99,15 +99,23 @@ downloaded or bundled, and the runtime loader must be able to find DuckDB.
 ### Building DuckDB from source (Android, iOS, and Linux)
 
 Set `native_build: source` to build the pinned upstream commit using the same
-`tools/build_native.py` script as CI. This requires Python 3, Git, CMake, Ninja,
+`hook/native_source.dart` module as the `tools/build_native.dart` CLI. This requires Dart, Git, CMake, Ninja,
 and Android NDK r28+ (`ANDROID_NDK_HOME`) or macOS with Xcode for iOS. Source and
 build outputs live in the hook output directory, outside the package source.
 Linux x64/arm64 source builds run on a matching native Linux host and require
-Git, Python 3, a C++ compiler, CMake, Ninja, and binutils (`strip`); no Android
+Git, a C++ compiler, CMake, Ninja, and binutils (`strip`); no Android
 NDK is used. Linux cross-compilation, explicit musl targets, macOS desktop, and
 Windows desktop source builds are not implemented; use binary mode or
 `library_path` for those configurations. All source builds verify the pinned
 upstream commit and include core functions, Parquet, JSON and ICU.
+
+The native asset hook calls Dart directly and does not require Python. Existing
+release commands can still use `tools/build_native.py`, a compatibility wrapper
+which requires `dart` on PATH. For manual builds use:
+
+```sh
+dart tools/build_native.dart --target linux-x64 --output build/native --jobs 2
+```
 
 ### DuckDB 2.0 compatibility
 

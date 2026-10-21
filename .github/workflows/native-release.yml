@@ -22,10 +22,12 @@ jobs:
       - name: Install NDK
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' > /dev/null
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
       - name: Build shared library
         run: |
           export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
-          python3 tools/build_native.py --target '${{ matrix.target }}' --output build/native --jobs 2
+          dart tools/build_native.dart --target '${{ matrix.target }}' --output build/native --jobs 2
       - name: Inspect ELF architecture and load alignment
         run: |
           "$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -h -l build/native/libduckdb.so
@@ -45,8 +47,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: brew install ninja
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
       - name: Build shared library
-        run: python3 tools/build_native.py --target '${{ matrix.target }}' --output build/native --jobs 2
+        run: dart tools/build_native.dart --target '${{ matrix.target }}' --output build/native --jobs 2
       - name: Inspect Mach-O dependencies and target platform
         run: |
           otool -L build/native/libduckdb.dylib
