@@ -75,9 +75,12 @@ arm64 devices and arm64/x64 simulators (minimum iOS 13).
 
 Mobile archives come from the configured GitHub native-binary release. The first
 `native-v2.0.0-r1` release must be built and published before the default mobile
-binary mode can work. Until then, use `native_build: source` or `library_path`.
-Missing downloads and checksum failures produce errors; they never silently load
-an older DuckDB or start a source build. Web retains its separate DuckDB-Wasm setup.
+binary mode can work. Use `native_build: auto` to try the tagged binary first and
+compile the pinned source when its archive or checksum asset returns HTTP 404.
+This requires the source toolchain for the target. `binary` remains strict;
+`source` always compiles. Network, authentication, checksum, and extraction errors
+remain errors in every mode. Unsupported source targets require `library_path`
+or a published binary. Web retains its separate DuckDB-Wasm setup.
 
 Configure the consuming application's pubspec (or the workspace root pubspec):
 
@@ -85,7 +88,7 @@ Configure the consuming application's pubspec (or the workspace root pubspec):
 hooks:
   user_defines:
     dart_duckdb:
-      native_build: binary # default; auto is an alias
+      native_build: auto # download first, compile if release asset is missing
       # linux_libc: musl
       # binary_repository: your-org/duckdb-dart # mobile release mirror
       # library_path: /absolute/path/to/libduckdb.so # bundle a local binary

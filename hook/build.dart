@@ -57,6 +57,17 @@ Future<void> main(List<String> args) async {
           code.iOS.targetSdk == IOSSdk.iPhoneSimulator,
       linuxLibc: input.userDefines['linux_libc'] ?? 'glibc',
     );
+    Future<File> source() async {
+      output.dependencies.add(
+        input.packageRoot.resolve('hook/native_source.dart'),
+      );
+      return buildNativeSource(
+        config: config,
+        target: target,
+        output: Directory.fromUri(input.outputDirectory.resolve('source/')),
+      );
+    }
+
     File library;
     if (localPath is String) {
       library = File(localPath);
@@ -67,27 +78,20 @@ Future<void> main(List<String> args) async {
       }
       output.dependencies.add(library.uri);
     } else if (mode == 'source') {
-      final script = input.packageRoot.resolve('hook/native_source.dart');
-      output.dependencies.add(script);
-      final directory = Directory.fromUri(
-        input.outputDirectory.resolve('source/'),
-      );
-      library = await buildNativeSource(
-        config: config,
-        target: target,
-        output: directory,
-      );
+      library = await source();
     } else {
-      // auto intentionally uses the same reproducible binary selection. Never
-      // silently start a source build when a release is missing or corrupt.
-      library = await obtainBinary(
-        config: config,
-        target: target,
-        libraryName: libraryName,
-        cache: Directory.fromUri(
-          input.outputDirectoryShared.resolve('binaries/'),
+      library = await obtainBinaryOrBuild(
+        allowSourceFallback: mode == 'auto',
+        source: source,
+        binary: () => obtainBinary(
+          config: config,
+          target: target,
+          libraryName: libraryName,
+          cache: Directory.fromUri(
+            input.outputDirectoryShared.resolve('binaries/'),
+          ),
+          repository: input.userDefines['binary_repository'] as String?,
         ),
-        repository: input.userDefines['binary_repository'] as String?,
       );
     }
     // Use one filename across architectures, particularly iOS device/simulator.

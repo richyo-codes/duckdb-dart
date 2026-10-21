@@ -4,6 +4,25 @@ import 'package:archive/archive.dart';
 import 'package:code_assets/code_assets.dart';
 import 'package:crypto/crypto.dart';
 
+class NativeBinaryUnavailable extends HttpException {
+  NativeBinaryUnavailable(Uri uri)
+    : super('Native release asset not found (HTTP 404).', uri: uri);
+}
+
+Future<File> obtainBinaryOrBuild({
+  required Future<File> Function() binary,
+  required Future<File> Function() source,
+  required bool allowSourceFallback,
+}) async {
+  try {
+    return await binary();
+  } on NativeBinaryUnavailable catch (error) {
+    if (!allowSourceFallback) rethrow;
+    stderr.writeln('$error Building pinned DuckDB source instead.');
+    return source();
+  }
+}
+
 String binaryTarget(
   OS os,
   Architecture arch, {
@@ -40,6 +59,9 @@ Future<List<int>> download(Uri uri) async {
     final response = await (await client.getUrl(
       uri,
     )).close().timeout(const Duration(minutes: 2));
+    if (response.statusCode == HttpStatus.notFound) {
+      throw NativeBinaryUnavailable(uri);
+    }
     if (response.statusCode != HttpStatus.ok) {
       throw HttpException(
         'HTTP ${response.statusCode}. The native release may not be published yet. '

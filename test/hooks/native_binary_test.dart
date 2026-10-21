@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:archive/archive.dart';
 import 'package:code_assets/code_assets.dart';
 import 'package:crypto/crypto.dart';
@@ -6,6 +8,83 @@ import 'package:test/test.dart';
 import '../../hook/native_binary.dart';
 
 void main() {
+  test('auto prefers binary and builds only when release is missing', () async {
+    var builds = 0;
+    Future<File> source() async {
+      builds++;
+      return File('compiled');
+    }
+
+    final binary = await obtainBinaryOrBuild(
+      binary: () async => File('downloaded'),
+      source: source,
+      allowSourceFallback: true,
+    );
+    expect(binary.path, 'downloaded');
+    expect(builds, 0);
+    final compiled = await obtainBinaryOrBuild(
+      binary: () async => throw NativeBinaryUnavailable(
+        Uri.parse('https://example.invalid/release'),
+      ),
+      source: source,
+      allowSourceFallback: true,
+    );
+    expect(compiled.path, 'compiled');
+    expect(builds, 1);
+  });
+  test(
+    'strict binary and integrity or transport errors never compile',
+    () async {
+      var builds = 0;
+      for (final error in [
+        NativeBinaryUnavailable(Uri.parse('https://example.invalid/release')),
+        const FormatException('bad checksum'),
+        const HttpException('HTTP 503'),
+        const SocketException('offline'),
+      ]) {
+        for (final auto in [false, true]) {
+          if (auto && error is NativeBinaryUnavailable) continue;
+          await expectLater(
+            obtainBinaryOrBuild(
+              binary: () async => throw error,
+              source: () async {
+                builds++;
+                return File('compiled');
+              },
+              allowSourceFallback: auto,
+            ),
+            throwsA(same(error)),
+          );
+        }
+      }
+      expect(builds, 0);
+    },
+  );
+  test(
+    'HTTP 404 is classified as unavailable but server errors are not',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      server.listen((request) async {
+        request.response.statusCode = int.parse(request.uri.path.substring(1));
+        await request.response.close();
+      });
+      for (final status in [404, 403, 500]) {
+        await expectLater(
+          download(Uri.parse('http://127.0.0.1:${server.port}/$status')),
+          throwsA(
+            status == 404
+                ? isA<NativeBinaryUnavailable>()
+                : isA<HttpException>().having(
+                    (e) => e is NativeBinaryUnavailable,
+                    'missing release',
+                    false,
+                  ),
+          ),
+        );
+      }
+    },
+  );
   test(
     'selects target architecture, libc and iOS SDK independently of host',
     () {
