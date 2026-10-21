@@ -25,7 +25,7 @@ class OpenDynamicLibrary extends OpenLibrary {
   Bindings openBindings() {
     final path = _overriddenPlatforms[os];
     return path == null
-        ? Bindings.fromLookup(lookupNativeAsset)
+        ? NativeAssetBindings()
         : Bindings(DynamicLibrary.open(path));
   }
 

@@ -8,6 +8,8 @@
 - Bundle precompiled DuckDB through build hooks for Dart and Flutter, with target
   selection, verified downloads and caching. Desktop checksums are pinned; mobile
   archives and checksum sidecars come from a versioned GitHub release.
+- Use typed native asset bindings to address missing asset IDs in Windows AOT
+  CLI bundles; preserve explicit dynamic-library overrides.
 - Replace Flutter plugin registration and filename-based loading with native asset
   resolution; retain explicit runtime overrides and add `system`/`library_path`
   options. Linux defaults to glibc with an explicit musl option.
