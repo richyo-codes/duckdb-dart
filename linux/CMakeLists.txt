@@ -6,16 +6,17 @@ project(${PROJECT_NAME} LANGUAGES C CXX)
 # not be changed
 set(PLUGIN_NAME "dart_duckdb_plugin")
 
-set(DUCKDB_DOWNLOAD_URL "https://github.com/duckdb/duckdb/releases/download/v1.4.2/libduckdb-linux-amd64.zip")
+set(DUCKDB_DOWNLOAD_URL "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-linux-amd64.tar.gz")
 set(DUCKDB_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/duckdb_download")
-set(DUCKDB_ZIP_FILE "${DUCKDB_DOWNLOAD_DIR}/libduckdb-linux-amd64.zip")
+set(DUCKDB_ARCHIVE_FILE "${DUCKDB_DOWNLOAD_DIR}/duckdb-shared-libs-linux-amd64.tar.gz")
 set(DUCKDB_EXTRACT_DIR "${DUCKDB_DOWNLOAD_DIR}/extracted")
 set(DUCKDB_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/release")
 set(DUCKDB_LIB_FILE "${DUCKDB_LIB_DIR}/libduckdb.so")
 
 if(NOT EXISTS ${DUCKDB_LIB_FILE})
   message(STATUS "DuckDB library not found. Downloading...")
-  file(DOWNLOAD ${DUCKDB_DOWNLOAD_URL} ${DUCKDB_ZIP_FILE} SHOW_PROGRESS STATUS download_status)
+  file(MAKE_DIRECTORY ${DUCKDB_DOWNLOAD_DIR})
+  file(DOWNLOAD ${DUCKDB_DOWNLOAD_URL} ${DUCKDB_ARCHIVE_FILE} SHOW_PROGRESS STATUS download_status)
   list(GET download_status 0 status_code)
   if(NOT status_code EQUAL 0)
     message(FATAL_ERROR "Failed to download DuckDB library")
@@ -25,7 +26,7 @@ if(NOT EXISTS ${DUCKDB_LIB_FILE})
   message(STATUS "Extracting DuckDB library...")
   file(MAKE_DIRECTORY ${DUCKDB_EXTRACT_DIR})
   execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DUCKDB_ZIP_FILE}
+    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DUCKDB_ARCHIVE_FILE}
     WORKING_DIRECTORY ${DUCKDB_EXTRACT_DIR}
     RESULT_VARIABLE extract_result
   )

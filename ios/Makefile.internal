@@ -1,5 +1,5 @@
 ## Variables
-VERSION = v1.4.2
+VERSION = v2.0.0
 DUCKDB_REPO = https://github.com/duckdb/duckdb
 DUCKDB_DIR = ./duckdb
 BUILD_DIR = $(DUCKDB_DIR)/build
@@ -53,7 +53,7 @@ device: duckdb ## iOS Hardware Build
 	-DOSX_BUILD_ARCH=arm64 -DIOS_PLATFORM=iPhoneOS -DBUILD_SHELL=0 \
 	-DDUCKDB_EXPLICIT_PLATFORM=osx_arm64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
 	-DCMAKE_BUILD_TYPE=Release ../.. && \
-	cmake --build . --target duckdb_framework
+	cmake --build . --target duckdb
 	@cp $(DUCKDB_DIR)/src/include/duckdb.h $(DUCKDB_DIR)/build/release/src/duckdb.framework/Headers
 	@mv $(DUCKDB_DIR)/build/release/src/duckdb.framework $(LIB_DIR)/duckdb.framework
 	@echo "iOS Device Build Complete"
@@ -66,7 +66,7 @@ simulator_no_clone: ## Universal iOS Simulator Build (no clone)
 	-DOSX_BUILD_ARCH=x86_64 -DIOS_PLATFORM=iPhoneSimulator -DBUILD_SHELL=0 \
 	-DDUCKDB_EXPLICIT_PLATFORM=osx_amd64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
 	-DCMAKE_BUILD_TYPE=Release ../.. && \
-	cmake --build . --target duckdb_framework
+	cmake --build . --target duckdb
 	@cp $(DUCKDB_DIR)/src/include/duckdb.h $(DUCKDB_DIR)/build/release/src/duckdb.framework/Headers
 	@mv $(DUCKDB_DIR)/build/release/src/duckdb.framework $(LIB_DIR)/tmp/x64.framework
 	@make -C $(DUCKDB_DIR) clean
@@ -76,7 +76,7 @@ simulator_no_clone: ## Universal iOS Simulator Build (no clone)
 	-DOSX_BUILD_ARCH=arm64 -DIOS_PLATFORM=iPhoneSimulator -DBUILD_SHELL=0 \
 	-DDUCKDB_EXPLICIT_PLATFORM=osx_arm64 -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
 	-DCMAKE_BUILD_TYPE=Release ../.. && \
-	cmake --build . --target duckdb_framework
+	cmake --build . --target duckdb
 	@cp $(DUCKDB_DIR)/src/include/duckdb.h $(DUCKDB_DIR)/build/release/src/duckdb.framework/Headers
 	@mv $(DUCKDB_DIR)/build/release/src/duckdb.framework $(LIB_DIR)/duckdb.framework.sim
 	@lipo -create $(LIB_DIR)/duckdb.framework.sim/duckdb $(LIB_DIR)/tmp/x64.framework/duckdb -output $(LIB_DIR)/duckdb.framework.sim/duckdb

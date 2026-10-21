@@ -28,13 +28,14 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
 set(PREBUILT_RELEASE_DUCKDB_DLL "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/release/duckdb.dll")
-set(DUCKDB_DOWNLOAD_URL "https://github.com/duckdb/duckdb/releases/download/v1.4.2/libduckdb-windows-amd64.zip")
+set(DUCKDB_DOWNLOAD_URL "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-windows-amd64.tar.gz")
 set(DUCKDB_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/duckdb_download")
-set(DUCKDB_ZIP_FILE "${DUCKDB_DOWNLOAD_DIR}/libduckdb-windows-amd64.zip")
+set(DUCKDB_ARCHIVE_FILE "${DUCKDB_DOWNLOAD_DIR}/duckdb-shared-libs-windows-amd64.tar.gz")
 
 if(NOT EXISTS ${PREBUILT_RELEASE_DUCKDB_DLL})
   message(STATUS "DuckDB DLL not found. Downloading...")
-  file(DOWNLOAD ${DUCKDB_DOWNLOAD_URL} ${DUCKDB_ZIP_FILE} SHOW_PROGRESS STATUS download_status)
+  file(MAKE_DIRECTORY ${DUCKDB_DOWNLOAD_DIR})
+  file(DOWNLOAD ${DUCKDB_DOWNLOAD_URL} ${DUCKDB_ARCHIVE_FILE} SHOW_PROGRESS STATUS download_status)
   list(GET download_status 0 status_code)
   if(NOT status_code EQUAL 0)
     message(FATAL_ERROR "Failed to download DuckDB DLL")
@@ -44,7 +45,7 @@ if(NOT EXISTS ${PREBUILT_RELEASE_DUCKDB_DLL})
   message(STATUS "Extracting DuckDB DLL...")
   file(MAKE_DIRECTORY ${DUCKDB_DOWNLOAD_DIR}/extracted)
   execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DUCKDB_ZIP_FILE}
+    COMMAND ${CMAKE_COMMAND} -E tar xzf ${DUCKDB_ARCHIVE_FILE}
     WORKING_DIRECTORY ${DUCKDB_DOWNLOAD_DIR}/extracted
     RESULT_VARIABLE extract_result
   )
