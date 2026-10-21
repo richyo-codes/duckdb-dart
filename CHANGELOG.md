@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add DuckDB 2.0 integration tests for triggers, transactional rollback,
+  data-modifying CTEs, prepared parameters, nearest joins, and explicit SQL
+  conversions from VARIANT. Direct VARIANT decoding is not yet exposed.
+- Require new DuckDB 2.0 public APIs to be documented as experimental.
+
 - Support DuckDB 2.0.0 through its compatible legacy C API.
 - Remove the obsolete `test_api` override so tests resolve on Dart 3.10.
 - Fix standalone Dart/CLI/server use without a Flutter SDK ([#41](https://github.com/TigerEyeLabs/duckdb-dart/issues/41)).

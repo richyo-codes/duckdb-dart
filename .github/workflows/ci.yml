@@ -32,6 +32,9 @@ jobs:
               output.write(f'DUCKDB_TEST_VERSION={version}\n')
       - name: Test downloaded code asset without a system DuckDB installation
         run: dart test test/ffi test/types test/api test/hooks --reporter expanded
+      - name: Test DuckDB 2.0 features in an AOT bundle
+        if: matrix.sdk == 'stable'
+        run: dart test test/ffi/duckdb_2_features_test.dart --compiler cli --reporter expanded
       - name: Build standalone CLI bundle
         run: dart build cli --target=tools/native_smoke.dart
       - name: Run standalone CLI bundle

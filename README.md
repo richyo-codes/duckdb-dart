@@ -358,6 +358,12 @@ DuckDB.dart is proudly Sponsored by [TigerEye <span style="font-size: 20px;">üê
 
 ## Contributing
 
+New public APIs added for DuckDB 2.0 must be labeled **Experimental** in their
+Dart documentation and release notes until explicitly stabilized. Include tests
+for successful operations, null and empty inputs, errors, resource cleanup, and
+platform limitations alongside each API. Experimental APIs may change between
+releases; exposing a feature does not imply native/Web parity.
+
 We'd love your contributions! Here's how to get started:
 
 1. Fork the repository.
