@@ -99,3 +99,6 @@ examples/simple/linux/flutter/ephemeral/.plugin_symlinks/
 
 # FVM Version Cache
 .fvm/
+
+# Python release tooling
+__pycache__/

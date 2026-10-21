@@ -6,9 +6,10 @@ issue_tracker: https://github.com/TigerEyeLabs/duckdb-dart/issues
 
 environment:
   sdk: ">=3.10.0 <4.0.0"
-  flutter: ">=3.41.0 <=4.0.0"
 
 dependencies:
+  archive: ^4.0.7
+  crypto: ^3.0.7
   async: ^2.11.0
   collection: ^1.17.0
   ffi: ^2.0.1
@@ -24,41 +25,10 @@ dependencies:
 
 dev_dependencies:
   ffigen: ^23.0.0
-  flutter_test:
-    sdk: flutter
-  flutter_web_plugins:
-    sdk: flutter
   lints: ^6.1.0
   test: ^1.26.3
-
-dependency_overrides:
-  test_api: ^0.7.7
 
 topics:
   - duckdb
   - database
   - sql
-
-flutter:
-  plugin:
-    platforms:
-      ios:
-        dartPluginClass: DuckDB
-        pluginClass: DuckDBPlugin
-      macos:
-        dartPluginClass: DuckDB
-        pluginClass: DuckDBPlugin
-      windows:
-        dartPluginClass: DuckDB
-        pluginClass: DartDuckdbPluginCApi
-      android:
-        dartPluginClass: DuckDB
-        package: com.tigereye.duckdb_libs
-        pluginClass: DuckdbLibsPlugin
-      linux:
-        dartPluginClass: DuckDB
-        pluginClass: DartDuckdbPlugin
-      web:
-        dartPluginClass: DuckDB
-        pluginClass: DuckDB
-        fileName: src/web/duckdb_web.dart

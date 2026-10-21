@@ -11,8 +11,6 @@
 /// ```
 library;
 
-import 'dart:ffi';
-
 import 'package:dart_duckdb/src/api/connection.dart';
 import 'package:dart_duckdb/src/api/database.dart';
 import 'package:dart_duckdb/src/api/duckdb.dart' as api;
@@ -23,9 +21,7 @@ import 'package:dart_duckdb/src/ffi/load_library.dart' as load;
 
 class BindingsWithLibrary {
   final Bindings bindings;
-  final DynamicLibrary library;
-
-  BindingsWithLibrary(this.library) : bindings = Bindings(library);
+  BindingsWithLibrary(this.bindings);
 }
 
 class DuckDB extends api.DuckDB {
@@ -36,9 +32,9 @@ class DuckDB extends api.DuckDB {
   Bindings get bindings => _library.bindings;
 
   DuckDB._internal()
-      : _library = BindingsWithLibrary(
-          (load.open as load.OpenDynamicLibrary).openDuckDB(),
-        );
+    : _library = BindingsWithLibrary(
+        (load.open as load.OpenDynamicLibrary).openBindings(),
+      );
 
   // Registers this class as the default instance of [DuckDB]
   static void registerWith() {

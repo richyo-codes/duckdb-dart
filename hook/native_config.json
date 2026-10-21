@@ -1,0 +1,40 @@
+{
+  "duckdb_version": "v2.0.0",
+  "duckdb_commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "release_tag": "native-v2.0.0-r1",
+  "repository": "richyo-codes/duckdb-dart",
+  "desktop": {
+    "linux-x64-musl": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-linux-amd64-musl.tar.gz",
+      "sha256": "af73c035c8bf50e546fae135f2ac18e67e485ae40c0dbdc9b41666ef605939a1"
+    },
+    "linux-x64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-linux-amd64.tar.gz",
+      "sha256": "993ad89e7dfca66cd6da994c2cad090c2fc160ddf9f550498a098ab4bb13cfb1"
+    },
+    "linux-arm64-musl": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-linux-arm64-musl.tar.gz",
+      "sha256": "a0d19d3ce807efbc7f8910ff7cc5d165ce4678c32f46b533aa67023496afd1f0"
+    },
+    "linux-arm64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-linux-arm64.tar.gz",
+      "sha256": "c60eecf91143ca6bbac55c4f4d40dc22520488b0ac257c86e0fe9a2b451cf2b7"
+    },
+    "macos-x64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-osx-amd64.tar.gz",
+      "sha256": "98fef9fcad856555ca0403fe4d9d6680acfd26c67e8c6f004d61a248d6bc0eff"
+    },
+    "macos-arm64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-osx-arm64.tar.gz",
+      "sha256": "c35d60080b31ba5d11a3ce505a6831be784f003b4c575d32a4c2badb3b41cdf0"
+    },
+    "windows-x64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-windows-amd64.tar.gz",
+      "sha256": "2b83169128239de5f45fe21de80f99bf436e53aa4bb24020dd951a1ba8d4b95f"
+    },
+    "windows-arm64": {
+      "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-shared-libs-windows-arm64.tar.gz",
+      "sha256": "159ce60eb587112b8c5f290b8beea56af5f13be4d13679de127ad9bfaafb7447"
+    }
+  }
+}

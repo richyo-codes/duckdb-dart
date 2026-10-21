@@ -1,118 +1,117 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:code_assets/code_assets.dart';
 import 'package:hooks/hooks.dart';
 
-const _source = 'source';
+import 'native_binary.dart';
 
 Future<void> main(List<String> args) async {
   await build(args, (input, output) async {
     if (!input.config.buildCodeAssets) return;
-
-    final mode = input.userDefines['native_build'];
-    if (mode != null && mode != _source && mode != 'auto' && mode != 'binary') {
+    final configFile = input.packageRoot.resolve('hook/native_config.json');
+    final config =
+        jsonDecode(await File.fromUri(configFile).readAsString())
+            as Map<String, dynamic>;
+    output.dependencies.add(configFile);
+    final mode = input.userDefines['native_build'] ?? 'binary';
+    if (!['binary', 'auto', 'source', 'system'].contains(mode)) {
+      throw FormatException(
+        'Invalid native_build: $mode. Use binary, auto, source, or system.',
+      );
+    }
+    final code = input.config.code;
+    final libraryName = switch (code.targetOS) {
+      OS.windows => 'duckdb.dll',
+      OS.macOS || OS.iOS => 'libduckdb.dylib',
+      OS.linux || OS.android => 'libduckdb.so',
+      final os => throw UnsupportedError('DuckDB does not support $os.'),
+    };
+    final localPath = input.userDefines['library_path'];
+    if (localPath != null && localPath is! String) {
       throw const FormatException(
-        'hooks.user_defines.dart_duckdb.native_build must be '
-        '"source", "binary", or "auto".',
+        'library_path must be an absolute file path.',
       );
     }
-
-    // Binary mode remains the default and is still handled by the existing
-    // platform integration. The hook must not emit an asset in that mode or
-    // the platform integration would package two DuckDB libraries.
-    if (mode != _source) return;
-
-    final config = input.config.code;
-    if (config.targetOS != OS.android && config.targetOS != OS.iOS) return;
-    final packageRoot = Directory.fromUri(input.packageRoot);
-    final outputDirectory = Directory.fromUri(input.outputDirectory);
-    await outputDirectory.create(recursive: true);
-
-    final command = _buildCommand(config: config);
-    final result = await Process.run(
-      command.script,
-      command.arguments,
-      workingDirectory: packageRoot.path,
-      runInShell: Platform.isWindows,
-    );
-    stdout.write(result.stdout);
-    stderr.write(result.stderr);
-    if (result.exitCode != 0) {
-      throw ProcessException(
-        command.script,
-        command.arguments,
-        'DuckDB source build failed (exit code ${result.exitCode}).',
-        result.exitCode,
+    if (localPath != null && mode == 'system') {
+      throw const FormatException(
+        'Use library_path with binary mode, not system mode.',
       );
     }
-
-    final built = _builtLibrary(packageRoot, config, command.outputFileName);
-    if (!built.existsSync()) {
-      throw StateError('DuckDB source build did not produce ${built.path}.');
+    if (mode == 'system') {
+      output.assets.code.add(
+        CodeAsset(
+          package: input.packageName,
+          name: 'duckdb',
+          linkMode: DynamicLoadingSystem(Uri.file(libraryName)),
+        ),
+      );
+      return;
     }
-    final outputFile = File(
-      '${outputDirectory.path}/${command.outputFileName}',
+    final target = binaryTarget(
+      code.targetOS,
+      code.targetArchitecture,
+      simulator:
+          code.targetOS == OS.iOS &&
+          code.iOS.targetSdk == IOSSdk.iPhoneSimulator,
+      linuxLibc: input.userDefines['linux_libc'] ?? 'glibc',
     );
-    await outputFile.parent.create(recursive: true);
-    await built.copy(outputFile.path);
-
+    File library;
+    if (localPath is String) {
+      library = File(localPath);
+      if (!library.isAbsolute || !await library.exists()) {
+        throw ArgumentError(
+          'library_path must point to an existing absolute file: $localPath',
+        );
+      }
+      output.dependencies.add(library.uri);
+    } else if (mode == 'source') {
+      final script = input.packageRoot.resolve('tools/build_native.py');
+      output.dependencies.add(script);
+      final directory = Directory.fromUri(
+        input.outputDirectory.resolve('source/'),
+      );
+      final result =
+          await Process.run(Platform.isWindows ? 'python' : 'python3', [
+            File.fromUri(script).path,
+            '--target',
+            target,
+            '--output',
+            directory.path,
+          ]);
+      if (result.exitCode != 0) {
+        throw ProcessException(
+          'build_native.py',
+          [target],
+          '${result.stdout}\n${result.stderr}',
+          result.exitCode,
+        );
+      }
+      library = File('${directory.path}/$libraryName');
+    } else {
+      // auto intentionally uses the same reproducible binary selection. Never
+      // silently start a source build when a release is missing or corrupt.
+      library = await obtainBinary(
+        config: config,
+        target: target,
+        libraryName: libraryName,
+        cache: Directory.fromUri(
+          input.outputDirectoryShared.resolve('binaries/'),
+        ),
+        repository: input.userDefines['binary_repository'] as String?,
+      );
+    }
+    // Use one filename across architectures, particularly iOS device/simulator.
+    final bundled = File.fromUri(input.outputDirectory.resolve(libraryName));
+    await bundled.parent.create(recursive: true);
+    await library.copy(bundled.path);
     output.assets.code.add(
       CodeAsset(
         package: input.packageName,
-        name: 'src/ffi/load_library.dart',
+        name: 'duckdb',
         linkMode: DynamicLoadingBundled(),
-        file: outputFile.uri,
+        file: bundled.uri,
       ),
     );
   });
-}
-
-({String script, List<String> arguments, String outputFileName}) _buildCommand({
-  required CodeConfig config,
-}) {
-  final os = config.targetOS;
-  final arch = config.targetArchitecture;
-  if (os == OS.android) {
-    final abi = _androidAbi(arch);
-    return (
-      script: 'make',
-      arguments: ['-C', 'android', 'build_$abi'],
-      outputFileName: 'libduckdb.so',
-    );
-  }
-  if (os == OS.iOS) {
-    final target = config.iOS.targetSdk == IOSSdk.iPhoneSimulator
-        ? (arch == Architecture.x64 ? 'sim_x64' : 'sim_arm64')
-        : 'device';
-    return (
-      script: 'make',
-      arguments: ['-C', 'ios', target],
-      outputFileName: 'duckdb',
-    );
-  }
-  throw UnsupportedError('DuckDB source builds are unsupported on $os.');
-}
-
-File _builtLibrary(Directory root, CodeConfig config, String outputFileName) {
-  final os = config.targetOS;
-  if (os == OS.android) {
-    final abi = _androidAbi(config.targetArchitecture);
-    return File('${root.path}/android/src/main/jniLibs/$abi/libduckdb.so');
-  }
-  if (os == OS.iOS) {
-    return File('${root.path}/ios/Libraries/release/duckdb.framework/duckdb');
-  }
-  throw UnsupportedError('Unsupported target OS ${config.targetOS}.');
-}
-
-String _androidAbi(Architecture architecture) {
-  return switch (architecture) {
-    Architecture.arm64 => 'arm64-v8a',
-    Architecture.arm => 'armeabi-v7a',
-    Architecture.x64 => 'x86_64',
-    Architecture.ia32 => 'x86',
-    _ => throw UnsupportedError(
-      'Android architecture $architecture is unsupported.',
-    ),
-  };
 }
