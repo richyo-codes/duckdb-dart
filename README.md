@@ -96,14 +96,18 @@ downloaded or bundled, and the runtime loader must be able to find DuckDB.
 `open.overrideFor(...)` still supports explicit runtime library selection, but use
 `system` or `library_path` to avoid the default build-time download as well.
 
-### Building DuckDB from source (Android and iOS)
+### Building DuckDB from source (Android, iOS, and Linux)
 
 Set `native_build: source` to build the pinned upstream commit using the same
 `tools/build_native.py` script as CI. This requires Python 3, Git, CMake, Ninja,
 and Android NDK r28+ (`ANDROID_NDK_HOME`) or macOS with Xcode for iOS. Source and
 build outputs live in the hook output directory, outside the package source.
-Desktop source builds are not implemented by this hook; use `library_path` for a
-custom desktop binary. These builds include core functions, Parquet, JSON and ICU.
+Linux x64/arm64 source builds run on a matching native Linux host and require
+Git, Python 3, a C++ compiler, CMake, Ninja, and binutils (`strip`); no Android
+NDK is used. Linux cross-compilation, explicit musl targets, macOS desktop, and
+Windows desktop source builds are not implemented; use binary mode or
+`library_path` for those configurations. All source builds verify the pinned
+upstream commit and include core functions, Parquet, JSON and ICU.
 
 ### DuckDB 2.0 compatibility
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the pinned DuckDB shared library for hooks and mobile release jobs."""
+"""Build pinned DuckDB for mobile targets or the native Linux host."""
 import argparse
 import json
 import os
@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / 'hook/native_config.json').read_text())
 MOBILE_TARGETS = ('android-arm64', 'android-x64', 'ios-arm64',
                   'ios-simulator-arm64', 'ios-simulator-x64')
+LINUX_TARGETS = ('linux-x64', 'linux-arm64')
 
 
 def run(*args, **kwargs):
@@ -20,13 +21,21 @@ def run(*args, **kwargs):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--target', required=True, choices=MOBILE_TARGETS)
+    parser.add_argument('--target', required=True, choices=MOBILE_TARGETS + LINUX_TARGETS)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--jobs', type=int, default=2)
     args = parser.parse_args()
+    if args.jobs < 1:
+        parser.error('--jobs must be positive.')
     ios = args.target.startswith('ios-')
+    linux = args.target.startswith('linux-')
     if ios and platform.system() != 'Darwin':
         parser.error('iOS source builds require macOS and Xcode.')
+    if linux:
+        architecture = {'x86_64': 'x64', 'amd64': 'x64',
+                        'aarch64': 'arm64', 'arm64': 'arm64'}.get(platform.machine().lower())
+        if platform.system() != 'Linux' or args.target != f'linux-{architecture}':
+            parser.error('Linux source builds require a matching native Linux host; cross-compilation is not configured. Use binary mode or library_path.')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     source = output / 'source'
@@ -54,6 +63,9 @@ def main():
             '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO',
         ]
         library = 'libduckdb.dylib'
+    elif linux:
+        options += ['-DCMAKE_POSITION_INDEPENDENT_CODE=ON']
+        library = 'libduckdb.so'
     else:
         ndk = os.environ.get('ANDROID_NDK_HOME') or os.environ.get('ANDROID_NDK_ROOT')
         if not ndk:
@@ -71,6 +83,8 @@ def main():
     shutil.copy2(build / 'src' / library, packaged)
     if ios:
         run('xcrun', 'strip', '-S', packaged)
+    elif linux:
+        run('strip', '--strip-debug', packaged)
     else:
         host = {'Linux': 'linux-x86_64', 'Darwin': 'darwin-x86_64',
                 'Windows': 'windows-x86_64'}[platform.system()]
