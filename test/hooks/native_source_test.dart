@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../../hook/native_source.dart';
@@ -72,7 +73,15 @@ void main() {
         );
         expect(
           commands.last.first,
-          '/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip',
+          p.join(
+            '/ndk',
+            'toolchains',
+            'llvm',
+            'prebuilt',
+            'linux-x86_64',
+            'bin',
+            'llvm-strip',
+          ),
         );
       }
     });
